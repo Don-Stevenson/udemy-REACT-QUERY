@@ -33,26 +33,27 @@ export function InfinitePeople() {
     return <div className="error">Error: {error.toString()}</div>
   }
   return (
-    <InfiniteScroll
-      loadMore={() => {
-        if (!isFetching) {
-          fetchNextPage()
-        }
-      }}
-      hasMore={hasNextPage}
-    >
-      {data?.pages.map(pageData => {
-        return pageData.results.map(result => {
-          return (
+    <>
+      {isFetching && <div className="loading">...</div>}
+      <InfiniteScroll
+        loadMore={() => {
+          if (!isFetching) {
+            fetchNextPage()
+          }
+        }}
+        hasMore={hasNextPage}
+      >
+        {data?.pages.map(pageData => {
+          return pageData.results.map(({ name, hair_color, eye_color }) => (
             <Person
-              key={result.name}
-              name={result.name}
-              hairColor={result.hair_color}
-              eyeColor={result.eye_color}
+              key={name}
+              name={name}
+              hairColor={hair_color}
+              eyeColor={eye_color}
             />
-          )
-        })
-      })}
-    </InfiniteScroll>
+          ))
+        })}
+      </InfiniteScroll>
+    </>
   )
 }
