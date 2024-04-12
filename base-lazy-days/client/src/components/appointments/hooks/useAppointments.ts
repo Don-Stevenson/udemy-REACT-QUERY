@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import { use, useEffect, useState } from 'react'
+import { use, useCallback, useEffect, useState } from 'react'
 
 import { AppointmentDateMap } from '../types'
 import { getAvailableAppointments } from '../utils'
@@ -17,6 +17,12 @@ async function getAppointments(
 ): Promise<AppointmentDateMap> {
   const { data } = await axiosInstance.get(`/appointments/${year}/${month}`)
   return data
+}
+
+const commonOptions = {
+  staleTime: 0,
+  gcTime: 300000,
+  refetchOnWindowFocus: true,
 }
 
 // The purpose of this hook:
@@ -51,9 +57,20 @@ export function useAppointments() {
   //   appointments that the logged-in user has reserved (in white)
   const { userId } = useLoginData()
 
+  const selectFn = useCallback(
+    (data: AppointmentDateMap, showAll: boolean) => {
+      if (showAll) {
+        return data
+      } else return getAvailableAppointments(data, userId)
+    },
+    [userId]
+  )
+
   /** ****************** END 2: filter appointments  ******************** */
   /** ****************** START 3: useQuery  ***************************** */
   // useQuery call for appointments for the current monthYear
+
+
 
   const queryClient = useQueryClient()
 
@@ -66,6 +83,7 @@ export function useAppointments() {
         nextMonthYear.month,
       ],
       queryFn: () => getAppointments(nextMonthYear.year, nextMonthYear.month),
+      ... commonOptions
     })
   }, [queryClient, monthYear])
 
@@ -81,6 +99,9 @@ export function useAppointments() {
   const { data: appointments = fallBack } = useQuery({
     queryKey: [queryKeys.appointments, monthYear.year, monthYear.month],
     queryFn: () => getAppointments(monthYear.year, monthYear.month),
+    select: data => selectFn(data, showAll),
+    refetchOnWindowFocus: true,
+    ... commonOptions
   })
 
   /** ****************** END 3: useQuery  ******************************* */
